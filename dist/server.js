@@ -22,9 +22,6 @@ const jwt = require('jsonwebtoken');
 const port = process.env.PORT;
 app.use(cors());
 app.use(express_1.default.json());
-app.get('/', (req, res) => {
-    res.send('Hello, this is Express + TypeScript');
-});
 // get all todos
 app.get('/todos/:userEmail', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userEmail } = req.params;
@@ -50,7 +47,6 @@ app.get('/users/:userEmail', (req, res) => __awaiter(void 0, void 0, void 0, fun
 // create a new todo
 app.post('/todos', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { user_email, title, progress, date } = req.body;
-    console.log(user_email, title, progress, date);
     const id = uuidv4();
     try {
         const newTodo = yield pool.query(`INSERT INTO todos (id, user_email, title, progress, date) VALUES($1, $2, $3, $4, $5)`, [id, user_email, title, progress, date]);
@@ -95,7 +91,7 @@ app.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
     catch (error) {
         if (error) {
-            // res.json({ detail: error.detail })
+            res.json({ detail: error.detail });
             console.error(error);
         }
     }
@@ -122,5 +118,5 @@ app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 }));
 app.listen(port, () => {
-    console.log(`[Server]: I am running at https://localhost:${port}`);
+    console.log(`[Server]: Running at https://localhost:${port}`);
 });

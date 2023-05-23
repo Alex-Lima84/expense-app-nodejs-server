@@ -124,5 +124,5 @@ app.post('/login', async (req, res) => {
 
 
 app.listen(port, () => {
-    console.log(`[Server]: I am running at https://localhost:${port}`);
+    console.log(`[Server]: Running at https://localhost:${port}`);
 });
