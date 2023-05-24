@@ -33,6 +33,17 @@ app.get('/todos/:userEmail', (req, res) => __awaiter(void 0, void 0, void 0, fun
         console.error(error);
     }
 }));
+// get all expenses
+app.get('/expenses/:userEmail', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userEmail } = req.params;
+    try {
+        const expenses = yield pool.query('SELECT * FROM expenses WHERE user_email = $1', [userEmail]);
+        res.json(expenses.rows);
+    }
+    catch (error) {
+        console.log(error);
+    }
+}));
 // get user info
 app.get('/users/:userEmail', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userEmail } = req.params;

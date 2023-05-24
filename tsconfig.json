@@ -1,6 +1,7 @@
 {
   "compilerOptions": {    
-    "target": "es2016",                                  
+    "target": "es2016", 
+    "watch": true,                                 
     "module": "commonjs",                               
     "rootDir": "./src",                                  
     "outDir": "./dist",                                

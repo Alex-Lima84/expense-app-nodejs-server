@@ -23,6 +23,17 @@ app.get('/todos/:userEmail', async (req, res) => {
     }
 })
 
+// get all expenses
+app.get('/expenses/:userEmail', async (req, res) => {
+    const { userEmail } = req.params
+    try {
+        const expenses = await pool.query('SELECT * FROM expenses WHERE user_email = $1', [userEmail])
+        res.json(expenses.rows)
+    } catch (error) {
+        console.log(error)
+    }
+})
+
 // get user info
 app.get('/users/:userEmail', async (req: Request, res: Response) => {
 
