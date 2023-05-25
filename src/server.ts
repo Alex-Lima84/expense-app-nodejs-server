@@ -46,12 +46,12 @@ app.get('/expense-categories', async (req: Request, res: Response) => {
 })
 
 // get all expense types
-app.get('/expense-types/:expenseCategory', async (req: Request, res: Response) => {
+app.get('/expense-types/:expenseCategoryId', async (req: Request, res: Response) => {
 
-    const { expenseCategory } = req.params
+    const { expenseCategoryId } = req.params
 
     try {
-        const expenseTypes = await pool.query('SELECT * FROM expense_types WHERE expense_category = $1', [expenseCategory])
+        const expenseTypes = await pool.query('SELECT * FROM expense_types WHERE expense_category = $1', [expenseCategoryId])
         res.json(expenseTypes.rows)
     } catch (error) {
         console.log(error)
