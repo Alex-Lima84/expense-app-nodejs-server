@@ -34,6 +34,30 @@ app.get('/expenses/:userEmail', async (req, res) => {
     }
 })
 
+// get expense categories
+app.get('/expense-categories', async (req: Request, res: Response) => {
+
+    try {
+        const expenseCategories = await pool.query('SELECT * FROM expense_categories')
+        res.json(expenseCategories.rows)
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+// get all expense types
+app.get('/expense-types/:expenseCategory', async (req: Request, res: Response) => {
+
+    const { expenseCategory } = req.params
+
+    try {
+        const expenseTypes = await pool.query('SELECT * FROM expense_types WHERE expense_category = $1', [expenseCategory])
+        res.json(expenseTypes.rows)
+    } catch (error) {
+        console.log(error)
+    }
+})
+
 // get user info
 app.get('/users/:userEmail', async (req: Request, res: Response) => {
 
