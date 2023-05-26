@@ -70,14 +70,15 @@ app.get('/users/:userEmail', async (req: Request, res: Response) => {
     }
 })
 
-// create a new todo
-app.post('/todos', async (req: Request, res: Response) => {
-    const { user_email, title, progress, date } = req.body
+// create a expense
+app.post('/expense', async (req: Request, res: Response) => {
+    const { expenseTypeName, expenseAmount, expenseCategoryName, expenseDate, expenseYear, expenseMonth, userEmail } = req.body
     const id = uuidv4()
     try {
-        const newTodo = await pool.query(`INSERT INTO todos (id, user_email, title, progress, date) VALUES($1, $2, $3, $4, $5)`,
-            [id, user_email, title, progress, date])
-        res.json(newTodo)
+        const newExpense = await pool.query(`INSERT INTO expenses (expense_type, expense_amount, expense_category, expense_date, expense_year, expense_month, id, user_email) 
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [expenseTypeName, expenseAmount, expenseCategoryName, expenseDate, expenseYear, expenseMonth, id, userEmail])
+        res.json(newExpense)
     } catch (error) {
         console.error(error)
     }
