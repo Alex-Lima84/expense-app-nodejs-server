@@ -11,15 +11,15 @@ const port = process.env.PORT
 app.use(cors())
 app.use(express.json())
 
-// get all todos
-app.get('/todos/:userEmail', async (req, res) => {
+// get user info
+app.get('/users/:userEmail', async (req: Request, res: Response) => {
 
     const { userEmail } = req.params
     try {
-        const todos = await pool.query('SELECT * FROM todos WHERE user_email = $1', [userEmail])
-        res.json(todos.rows)
+        const userInfo = await pool.query('SELECT first_name, email FROM users WHERE email = $1', [userEmail])
+        res.json(userInfo.rows)
     } catch (error) {
-        console.error(error)
+        console.log(error)
     }
 })
 
@@ -45,7 +45,7 @@ app.get('/expense-categories', async (req: Request, res: Response) => {
     }
 })
 
-// get all expense types
+// get expense types
 app.get('/expense-types/:expenseCategoryId', async (req: Request, res: Response) => {
 
     const { expenseCategoryId } = req.params
@@ -58,26 +58,39 @@ app.get('/expense-types/:expenseCategoryId', async (req: Request, res: Response)
     }
 })
 
-// get user info
-app.get('/users/:userEmail', async (req: Request, res: Response) => {
-
-    const { userEmail } = req.params
-    try {
-        const userInfo = await pool.query('SELECT first_name, email FROM users WHERE email = $1', [userEmail])
-        res.json(userInfo.rows)
-    } catch (error) {
-        console.log(error)
-    }
-})
-
-// create a expense
-app.post('/expense', async (req: Request, res: Response) => {
+// create an expense
+app.post('/expense-entry', async (req: Request, res: Response) => {
     const { expenseTypeName, expenseAmount, expenseCategoryName, expenseDate, expenseYear, expenseMonth, userEmail } = req.body
     const id = uuidv4()
     try {
         const newExpense = await pool.query(`INSERT INTO expenses (expense_type, expense_amount, expense_category, expense_date, expense_year, expense_month, id, user_email) 
         VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
             [expenseTypeName, expenseAmount, expenseCategoryName, expenseDate, expenseYear, expenseMonth, id, userEmail])
+        res.json(newExpense)
+    } catch (error) {
+        console.error(error)
+    }
+})
+
+// get income types
+app.get('/income-types', async (req: Request, res: Response) => {
+
+    try {
+        const incomeTypes = await pool.query('SELECT * FROM income_types')
+        res.json(incomeTypes.rows)
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+// create an income
+app.post('/income-entry', async (req: Request, res: Response) => {
+    const { incomeTypeName, incomeAmount, incomeDate, incomeYear, incomeMonth, userEmail } = req.body
+    const id = uuidv4()
+    try {
+        const newExpense = await pool.query(`INSERT INTO incomes (income_type, income_amount, income_date, income_year, income_month, id, user_email) 
+        VALUES($1, $2, $3, $4, $5, $6, $7)`,
+            [incomeTypeName, incomeAmount, incomeDate, incomeYear, incomeMonth, id, userEmail])
         res.json(newExpense)
     } catch (error) {
         console.error(error)
