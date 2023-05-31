@@ -27,7 +27,7 @@ app.get('/users/:userEmail', async (req: Request, res: Response) => {
 app.get('/expenses/:userEmail', async (req, res) => {
     const { userEmail } = req.params
     try {
-        const expenses = await pool.query('SELECT * FROM expenses WHERE user_email = $1', [userEmail])
+        const expenses = await pool.query('SELECT * FROM expenses WHERE user_email = $1 ORDER BY updated_at LIMIT 10', [userEmail])
         res.json(expenses.rows)
     } catch (error) {
         console.log(error)
