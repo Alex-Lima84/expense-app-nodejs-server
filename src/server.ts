@@ -72,6 +72,18 @@ app.post('/expense-entry', async (req: Request, res: Response) => {
     }
 })
 
+// get expense info
+app.get('/expense/:userEmail/:id', async (req: Request, res: Response) => {
+    const { userEmail, id } = req.params
+
+    try {
+        const getExpenseInfo = await pool.query('SELECT expense_type, expense_amount, expense_category, expense_year, expense_month, id, updated_at FROM expenses WHERE user_email = $1 AND id = $2', [userEmail, id])
+        res.json(getExpenseInfo.rows)
+    } catch (error) {
+        console.error(error)
+    }
+})
+
 // get income types
 app.get('/income-types', async (req: Request, res: Response) => {
 
