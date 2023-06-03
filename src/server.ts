@@ -27,8 +27,8 @@ app.get('/users/:userEmail', async (req: Request, res: Response) => {
 app.get('/expenses/:userEmail', async (req, res) => {
     const { userEmail } = req.params
     try {
-        const expenses = await pool.query('SELECT * FROM expenses WHERE user_email = $1 ORDER BY updated_at LIMIT 10', [userEmail])
-        res.json(expenses.rows)
+        const expenses = await pool.query('SELECT * FROM expenses WHERE user_email = $1 ORDER BY updated_at DESC LIMIT 10', [userEmail])
+        res.json(expenses.rows)     
     } catch (error) {
         console.log(error)
     }
@@ -72,10 +72,24 @@ app.post('/expense-entry', async (req: Request, res: Response) => {
     }
 })
 
+// edit an expense
+app.put('/expense/:userEmail/:id', async (req: Request, res: Response) => {
+    const updated_at = new Date()
+    const { expenseTypeName, expenseAmount, expenseCategoryName, expenseDate, expenseYear, expenseMonth, userEmail, id } = req.body
+    try {
+
+        const editExpense = await pool.query('UPDATE expenses SET expense_type = $1, expense_amount = $2, expense_category = $3, expense_date = $4, expense_year = $5, expense_month = $6, updated_at = $7 WHERE user_email = $8 AND id = $9;',
+            [expenseTypeName, expenseAmount, expenseCategoryName, expenseDate, expenseYear, expenseMonth, updated_at, userEmail, id])
+        res.json(editExpense)
+    } catch (error) {
+        console.error(error)
+    }
+})
+
 // get expense info
 app.get('/expense/:userEmail/:id', async (req: Request, res: Response) => {
     const { userEmail, id } = req.params
-
+   
     try {
         const getExpenseInfo = await pool.query('SELECT expense_type, expense_amount, expense_category, expense_year, expense_month, id, updated_at FROM expenses WHERE user_email = $1 AND id = $2', [userEmail, id])
         res.json(getExpenseInfo.rows)
@@ -104,20 +118,6 @@ app.post('/income-entry', async (req: Request, res: Response) => {
         VALUES($1, $2, $3, $4, $5, $6, $7)`,
             [incomeTypeName, incomeAmount, incomeDate, incomeYear, incomeMonth, id, userEmail])
         res.json(newExpense)
-    } catch (error) {
-        console.error(error)
-    }
-})
-
-// edit a todo
-app.put('/todos/:id', async (req: Request, res: Response) => {
-    const { id } = req.params
-    const { user_email, title, progress, date } = req.body
-    try {
-
-        const editToDo = await pool.query('UPDATE todos SET user_email = $1, title = $2, progress = $3, date = $4 WHERE id = $5;',
-            [user_email, title, progress, date, id])
-        res.json(editToDo)
     } catch (error) {
         console.error(error)
     }
