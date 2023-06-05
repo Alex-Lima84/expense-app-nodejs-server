@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, NextFunction, Request, Response } from 'express';
 const { v4: uuidv4 } = require('uuid')
 const cors = require('cors');
 const app: Express = express();
@@ -6,33 +6,71 @@ const pool = require('./db')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
+interface CustomRequest extends Request {
+    userEmail?: string;
+}
+
 const port = process.env.PORT
 
 app.use(cors())
 app.use(express.json())
 
+const checkToken = (req: CustomRequest, res: Response, next: NextFunction) => {
+    const token = req.headers.authorization;
+
+    if (!token) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, 'secret');
+        req.userEmail = decoded.email;
+        next();
+    } catch (error) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+};
+
 // get user info
-app.get('/users/:userEmail', async (req: Request, res: Response) => {
+app.get('/users/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
 
     const { userEmail } = req.params
+
+    if (userEmail !== req.userEmail) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
     try {
         const userInfo = await pool.query('SELECT first_name, email FROM users WHERE email = $1', [userEmail])
         res.json(userInfo.rows)
     } catch (error) {
         console.log(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
 // get all expenses
-app.get('/expenses/:userEmail', async (req, res) => {
-    const { userEmail } = req.params
-    try {
-        const expenses = await pool.query('SELECT * FROM expenses WHERE user_email = $1 ORDER BY updated_at DESC LIMIT 10', [userEmail])
-        res.json(expenses.rows)     
-    } catch (error) {
-        console.log(error)
+app.get('/expenses/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
+    const { userEmail } = req.params;
+
+    if (userEmail !== req.userEmail) {
+        return res.status(403).json({ error: 'Forbidden' });
     }
-})
+
+    try {
+        const expenses = await pool.query(
+            'SELECT * FROM expenses WHERE user_email = $1 ORDER BY updated_at DESC LIMIT 10',
+            [userEmail]
+        );
+        const formattedExpenses = expenses.rows.map((expense: { expense_date: string | number | Date }) => {
+            const formattedDate = new Date(expense.expense_date).toLocaleDateString('en-GB');
+            return { ...expense, expense_date: formattedDate };
+        });
+        res.json(formattedExpenses);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
 
 // get expense categories
 app.get('/expense-categories', async (req: Request, res: Response) => {
@@ -42,6 +80,7 @@ app.get('/expense-categories', async (req: Request, res: Response) => {
         res.json(expenseCategories.rows)
     } catch (error) {
         console.log(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
@@ -55,6 +94,7 @@ app.get('/expense-types/:expenseCategoryId', async (req: Request, res: Response)
         res.json(expenseTypes.rows)
     } catch (error) {
         console.log(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
@@ -69,6 +109,7 @@ app.post('/expense-entry', async (req: Request, res: Response) => {
         res.json(newExpense)
     } catch (error) {
         console.error(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
@@ -83,18 +124,20 @@ app.put('/expense/:userEmail/:id', async (req: Request, res: Response) => {
         res.json(editExpense)
     } catch (error) {
         console.error(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
 // get expense info
 app.get('/expense/:userEmail/:id', async (req: Request, res: Response) => {
     const { userEmail, id } = req.params
-   
+
     try {
-        const getExpenseInfo = await pool.query('SELECT expense_type, expense_amount, expense_category, expense_year, expense_month, id, updated_at FROM expenses WHERE user_email = $1 AND id = $2', [userEmail, id])
+        const getExpenseInfo = await pool.query('SELECT expense_type, expense_amount, expense_category, expense_date, expense_year, expense_month, id, updated_at FROM expenses WHERE user_email = $1 AND id = $2', [userEmail, id])
         res.json(getExpenseInfo.rows)
     } catch (error) {
         console.error(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
@@ -106,6 +149,7 @@ app.get('/income-types', async (req: Request, res: Response) => {
         res.json(incomeTypes.rows)
     } catch (error) {
         console.log(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
@@ -120,6 +164,7 @@ app.post('/income-entry', async (req: Request, res: Response) => {
         res.json(newExpense)
     } catch (error) {
         console.error(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
@@ -132,6 +177,7 @@ app.delete('/todos/:id', async (req: Request, res: Response) => {
         res.json(deleteToDo)
     } catch (error) {
         console.error(error)
+        res.status(500).json({ error: 'An error occurred' });
     }
 })
 
@@ -182,8 +228,10 @@ app.post('/login', async (req, res) => {
     }
 })
 
-
-
 app.listen(port, () => {
     console.log(`[Server]: Running at https://localhost:${port}`);
 });
+
+app.use((req, res) => {
+    res.send("Expense app backend.");
+})
