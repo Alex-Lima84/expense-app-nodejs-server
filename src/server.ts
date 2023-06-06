@@ -48,7 +48,7 @@ app.get('/users/:userEmail', checkToken, async (req: CustomRequest, res: Respons
     }
 })
 
-// get all expenses
+// get last 10 expenses
 app.get('/expenses/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
     const { userEmail } = req.params;
 
@@ -141,6 +141,30 @@ app.get('/expense/:userEmail/:id', checkToken, async (req: Request, res: Respons
     }
 })
 
+// get last 10 incomes
+app.get('/incomes/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
+    const { userEmail } = req.params;
+
+    if (userEmail !== req.userEmail) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    try {
+        const incomes = await pool.query(
+            'SELECT * FROM incomes WHERE user_email = $1 ORDER BY updated_at DESC LIMIT 10',
+            [userEmail]
+        );
+        const formattedIncomes = incomes.rows.map((income: { income_date: string | number | Date }) => {
+            const formattedDate = new Date(income.income_date).toLocaleDateString('en-GB');
+            return { ...income, income_date: formattedDate };
+        });
+        res.json(formattedIncomes);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
+
 // get income types
 app.get('/income-types', checkToken, async (req: Request, res: Response) => {
 
@@ -162,6 +186,34 @@ app.post('/income-entry', async (req: Request, res: Response) => {
         VALUES($1, $2, $3, $4, $5, $6, $7)`,
             [incomeTypeName, incomeAmount, incomeDate, incomeYear, incomeMonth, id, userEmail])
         res.json(newExpense)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'An error occurred' });
+    }
+})
+
+// edit an income
+app.put('/income/:userEmail/:id', async (req: Request, res: Response) => {
+    const updated_at = new Date()
+    const { incomeTypeName, incomeAmount, incomeDate, incomeYear, incomeMonth, userEmail, id } = req.body
+    try {
+
+        const editExpense = await pool.query('UPDATE incomes SET income_type = $1, income_amount = $2, income_date = $3, income_year = $4, income_month = $5, updated_at = $6 WHERE user_email = $7 AND id = $8;',
+            [incomeTypeName, incomeAmount, incomeDate, incomeYear, incomeMonth, updated_at, userEmail, id])
+        res.json(editExpense)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'An error occurred' });
+    }
+})
+
+// get income info
+app.get('/income/:userEmail/:id', checkToken, async (req: Request, res: Response) => {
+    const { userEmail, id } = req.params
+
+    try {
+        const getIncomeInfo = await pool.query('SELECT income_type, income_amount, income_date, income_year, income_month, id, updated_at FROM incomes WHERE user_email = $1 AND id = $2', [userEmail, id])
+        res.json(getIncomeInfo.rows)
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: 'An error occurred' });
