@@ -73,7 +73,7 @@ app.get('/expenses/:userEmail', checkToken, async (req: CustomRequest, res: Resp
 });
 
 // get expense categories
-app.get('/expense-categories', async (req: Request, res: Response) => {
+app.get('/expense-categories', checkToken, async (req: Request, res: Response) => {
 
     try {
         const expenseCategories = await pool.query('SELECT * FROM expense_categories')
@@ -85,7 +85,7 @@ app.get('/expense-categories', async (req: Request, res: Response) => {
 })
 
 // get expense types
-app.get('/expense-types/:expenseCategoryId', async (req: Request, res: Response) => {
+app.get('/expense-types/:expenseCategoryId', checkToken, async (req: Request, res: Response) => {
 
     const { expenseCategoryId } = req.params
 
@@ -129,7 +129,7 @@ app.put('/expense/:userEmail/:id', async (req: Request, res: Response) => {
 })
 
 // get expense info
-app.get('/expense/:userEmail/:id', async (req: Request, res: Response) => {
+app.get('/expense/:userEmail/:id', checkToken, async (req: Request, res: Response) => {
     const { userEmail, id } = req.params
 
     try {
@@ -142,7 +142,7 @@ app.get('/expense/:userEmail/:id', async (req: Request, res: Response) => {
 })
 
 // get income types
-app.get('/income-types', async (req: Request, res: Response) => {
+app.get('/income-types', checkToken, async (req: Request, res: Response) => {
 
     try {
         const incomeTypes = await pool.query('SELECT * FROM income_types')
