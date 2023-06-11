@@ -51,8 +51,7 @@ app.get('/users/:userEmail', checkToken, async (req: CustomRequest, res: Respons
 // get expenses
 app.get('/expenses/:userEmail/:expenseQuantity', checkToken, async (req: CustomRequest, res: Response) => {
     const { userEmail, expenseQuantity } = req.params;
-    console.log(req.params)
-
+   
     if (userEmail !== req.userEmail) {
         return res.status(403).json({ error: 'Forbidden' });
     }
