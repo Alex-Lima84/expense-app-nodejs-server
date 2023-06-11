@@ -48,27 +48,47 @@ app.get('/users/:userEmail', checkToken, async (req: CustomRequest, res: Respons
     }
 })
 
-// get last 10 expenses
-app.get('/expenses/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
-    const { userEmail } = req.params;
+// get expenses
+app.get('/expenses/:userEmail/:expenseQuantity', checkToken, async (req: CustomRequest, res: Response) => {
+    const { userEmail, expenseQuantity } = req.params;
+    console.log(req.params)
 
     if (userEmail !== req.userEmail) {
         return res.status(403).json({ error: 'Forbidden' });
     }
 
-    try {
-        const expenses = await pool.query(
-            'SELECT * FROM expenses WHERE user_email = $1 ORDER BY updated_at DESC LIMIT 10',
-            [userEmail]
-        );
-        const formattedExpenses = expenses.rows.map((expense: { expense_date: string | number | Date }) => {
-            const formattedDate = new Date(expense.expense_date).toLocaleDateString('en-GB');
-            return { ...expense, expense_date: formattedDate };
-        });
-        res.json(formattedExpenses);
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'An error occurred' });
+    if (expenseQuantity) {
+        try {
+            const expenses = await pool.query(
+                `SELECT * FROM expenses WHERE user_email = $1 ORDER BY updated_at DESC LIMIT ${expenseQuantity}`,
+                [userEmail]
+            );
+            const formattedExpenses = expenses.rows.map((expense: { expense_date: string | number | Date }) => {
+                const formattedDate = new Date(expense.expense_date).toLocaleDateString('en-GB');
+                return { ...expense, expense_date: formattedDate };
+            });
+            res.json(formattedExpenses);
+        } catch (error) {
+            console.log(error);
+            res.status(500).json({ error: 'An error occurred' });
+        }
+    }
+
+    if (!expenseQuantity) {
+        try {
+            const expenses = await pool.query(
+                `SELECT * FROM expenses WHERE user_email = $1 ORDER BY updated_at DESC`,
+                [userEmail]
+            );
+            const formattedExpenses = expenses.rows.map((expense: { expense_date: string | number | Date }) => {
+                const formattedDate = new Date(expense.expense_date).toLocaleDateString('en-GB');
+                return { ...expense, expense_date: formattedDate };
+            });
+            res.json(formattedExpenses);
+        } catch (error) {
+            console.log(error);
+            res.status(500).json({ error: 'An error occurred' });
+        }
     }
 });
 
