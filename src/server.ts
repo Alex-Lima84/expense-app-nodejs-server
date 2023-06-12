@@ -51,7 +51,7 @@ app.get('/users/:userEmail', checkToken, async (req: CustomRequest, res: Respons
 // get expenses
 app.get('/expenses/:userEmail/:expenseQuantity', checkToken, async (req: CustomRequest, res: Response) => {
     const { userEmail, expenseQuantity } = req.params;
-   
+
     if (userEmail !== req.userEmail) {
         return res.status(403).json({ error: 'Forbidden' });
     }
@@ -159,6 +159,19 @@ app.get('/expense/:userEmail/:id', checkToken, async (req: Request, res: Respons
         res.status(500).json({ error: 'An error occurred' });
     }
 })
+
+// get expense months by year
+app.get('/expenses/:expenseYear', checkToken, async (req: Request, res: Response) => {
+    const { expenseYear } = req.params;
+
+    try {
+        const expenseMonthsByYear = await pool.query('SELECT DISTINCT expense_month FROM expenses WHERE expense_year = $1 ORDER BY expense_month ASC', [expenseYear]);
+        res.json(expenseMonthsByYear.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
 
 // get last 10 incomes
 app.get('/incomes/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
