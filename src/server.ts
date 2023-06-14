@@ -161,17 +161,43 @@ app.get('/expense/:userEmail/:id', checkToken, async (req: Request, res: Respons
 })
 
 // get expense months by year
-app.get('/expenses/:expenseYear', checkToken, async (req: Request, res: Response) => {
-    const { expenseYear } = req.params;
+app.get('/expenses-month/:expenseYear/:userEmail', checkToken, async (req: Request, res: Response) => {
+    const { userEmail, expenseYear } = req.params;
 
     try {
-        const expenseMonthsByYear = await pool.query('SELECT DISTINCT expense_month FROM expenses WHERE expense_year = $1 ORDER BY expense_month ASC', [expenseYear]);
+        const expenseMonthsByYear = await pool.query('SELECT DISTINCT expense_month FROM expenses WHERE user_email = $1 AND expense_year = $2 ORDER BY expense_month ASC', [userEmail, expenseYear]);
         res.json(expenseMonthsByYear.rows);
+        console.log(expenseMonthsByYear)
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'An error occurred' });
     }
 });
+
+// get expenses info by year and month
+app.get('/expenses-month/:expenseMonth/:currentExpenseYear/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
+
+    const { userEmail, expenseMonth, currentExpenseYear } = req.params;
+
+    if (userEmail !== req.userEmail) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    try {
+        const expenses = await pool.query(
+            `SELECT * FROM expenses WHERE user_email = $1 AND expense_month = $2 AND expense_year = $3`, [userEmail, expenseMonth, currentExpenseYear]
+        );
+        const formattedExpenses = expenses.rows.map((expense: { expense_date: string | number | Date }) => {
+            const formattedDate = new Date(expense.expense_date).toLocaleDateString('en-GB');
+            return { ...expense, expense_date: formattedDate };
+        });
+        console.log(formattedExpenses)
+        res.json(formattedExpenses);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+})
 
 // get last 10 incomes
 app.get('/incomes/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
