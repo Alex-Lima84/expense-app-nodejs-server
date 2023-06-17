@@ -167,7 +167,6 @@ app.get('/expenses-month/:expenseYear/:userEmail', checkToken, async (req: Reque
     try {
         const expenseMonthsByYear = await pool.query('SELECT DISTINCT expense_month FROM expenses WHERE user_email = $1 AND expense_year = $2 ORDER BY expense_month ASC', [userEmail, expenseYear]);
         res.json(expenseMonthsByYear.rows);
-        console.log(expenseMonthsByYear)
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'An error occurred' });
@@ -191,7 +190,7 @@ app.get('/expenses-month/:expenseMonth/:currentExpenseYear/:userEmail', checkTok
             const formattedDate = new Date(expense.expense_date).toLocaleDateString('en-GB');
             return { ...expense, expense_date: formattedDate };
         });
-        console.log(formattedExpenses)
+
         res.json(formattedExpenses);
     } catch (error) {
         console.log(error);
