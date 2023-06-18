@@ -166,7 +166,16 @@ app.get('/expenses-month/:expenseYear/:userEmail', checkToken, async (req: Reque
 
     try {
         const expenseMonthsByYear = await pool.query('SELECT DISTINCT expense_month FROM expenses WHERE user_email = $1 AND expense_year = $2 ORDER BY expense_month ASC', [userEmail, expenseYear]);
-        res.json(expenseMonthsByYear.rows);
+
+        const transformedExpenseMonths = expenseMonthsByYear.rows.map((row: { expense_month: string; }) => {
+            const expenseMonth = row.expense_month;
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const transformedMonth = monthNames[parseInt(expenseMonth) - 1];
+
+            return { expense_month: transformedMonth };
+        });
+
+        res.json(transformedExpenseMonths);
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'An error occurred' });
@@ -175,18 +184,27 @@ app.get('/expenses-month/:expenseYear/:userEmail', checkToken, async (req: Reque
 
 // get expenses info by year and month
 app.get('/expenses-month/:expenseMonth/:currentExpenseYear/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
-
     const { userEmail, expenseMonth, currentExpenseYear } = req.params;
 
     if (userEmail !== req.userEmail) {
         return res.status(403).json({ error: 'Forbidden' });
     }
 
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const transformedMonthIndex = monthNames.findIndex((month) => month.toLowerCase() === expenseMonth.toLowerCase());
+
+    if (transformedMonthIndex === -1) {
+        return res.status(400).json({ error: 'Invalid expense month' });
+    }
+
+    const originalMonth = String(transformedMonthIndex + 1).padStart(2, '0');
+
     try {
         const expenses = await pool.query(
-            `SELECT * FROM expenses WHERE user_email = $1 AND expense_month = $2 AND expense_year = $3`, [userEmail, expenseMonth, currentExpenseYear]
+            `SELECT * FROM expenses WHERE user_email = $1 AND expense_month = $2 AND expense_year = $3`, [userEmail, originalMonth, currentExpenseYear]
         );
-        const formattedExpenses = expenses.rows.map((expense: { expense_date: string | number | Date }) => {
+
+        const formattedExpenses = expenses.rows.map((expense: { expense_date: string | number | Date; }) => {
             const formattedDate = new Date(expense.expense_date).toLocaleDateString('en-GB');
             return { ...expense, expense_date: formattedDate };
         });
@@ -196,7 +214,8 @@ app.get('/expenses-month/:expenseMonth/:currentExpenseYear/:userEmail', checkTok
         console.log(error);
         res.status(500).json({ error: 'An error occurred' });
     }
-})
+});
+
 
 // get last 10 incomes
 app.get('/incomes/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
