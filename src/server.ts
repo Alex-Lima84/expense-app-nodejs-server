@@ -149,11 +149,11 @@ app.put('/expense/:userEmail/:id', async (req: Request, res: Response) => {
 
 //delete an expense
 app.delete('/expense/:userEmail/:id', async (req: Request, res: Response) => {
-    const { id } = req.params
+    const { id, userEmail } = req.params
 
     try {
-        const deleteToDo = await pool.query('DELETE FROM expenses WHERE id = $1', [id])
-        res.json(deleteToDo)
+        const deleteExpense = await pool.query('DELETE FROM expenses WHERE user_email = $1 AND id = $2', [userEmail, id])
+        res.json(deleteExpense)
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: 'An error occurred' });
@@ -281,6 +281,19 @@ app.post('/income-entry', async (req: Request, res: Response) => {
     }
 })
 
+// get income info
+app.get('/income/:userEmail/:id', checkToken, async (req: Request, res: Response) => {
+    const { userEmail, id } = req.params
+
+    try {
+        const getIncomeInfo = await pool.query('SELECT income_type, income_amount, income_date, income_year, income_month, id, updated_at FROM incomes WHERE user_email = $1 AND id = $2', [userEmail, id])
+        res.json(getIncomeInfo.rows)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'An error occurred' });
+    }
+})
+
 // edit an income
 app.put('/income/:userEmail/:id', async (req: Request, res: Response) => {
     const updated_at = new Date()
@@ -296,13 +309,13 @@ app.put('/income/:userEmail/:id', async (req: Request, res: Response) => {
     }
 })
 
-// get income info
-app.get('/income/:userEmail/:id', checkToken, async (req: Request, res: Response) => {
-    const { userEmail, id } = req.params
+//delete an income
+app.delete('/income/:userEmail/:id', async (req: Request, res: Response) => {
+    const { id, userEmail } = req.params
 
     try {
-        const getIncomeInfo = await pool.query('SELECT income_type, income_amount, income_date, income_year, income_month, id, updated_at FROM incomes WHERE user_email = $1 AND id = $2', [userEmail, id])
-        res.json(getIncomeInfo.rows)
+        const deleteIncome = await pool.query('DELETE FROM incomes WHERE user_email = $1 AND id = $2', [userEmail, id])
+        res.json(deleteIncome)
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: 'An error occurred' });
