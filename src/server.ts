@@ -294,6 +294,62 @@ app.get('/income/:userEmail/:id', checkToken, async (req: Request, res: Response
     }
 })
 
+// get income months by year
+app.get('/incomes-month/:incomeYear/:userEmail', checkToken, async (req: Request, res: Response) => {
+    const { userEmail, incomeYear } = req.params;
+
+    try {
+        const incomeMonthsByYear = await pool.query('SELECT DISTINCT income_month FROM incomes WHERE user_email = $1 AND income_year = $2 ORDER BY income_month ASC', [userEmail, incomeYear]);
+
+        const transformedIncomeMonths = incomeMonthsByYear.rows.map((row: { income_month: string; }) => {
+            const incomeMonth = row.income_month;
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const transformedMonth = monthNames[parseInt(incomeMonth) - 1];
+
+            return { income_month: transformedMonth };
+        });
+
+        res.json(transformedIncomeMonths);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
+
+// get incomes info by year and month
+app.get('/incomes-month/:incomeMonth/:currentIncomeYear/:userEmail', checkToken, async (req: CustomRequest, res: Response) => {
+    const { userEmail, incomeMonth, currentIncomeYear } = req.params;
+
+    if (userEmail !== req.userEmail) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const transformedMonthIndex = monthNames.findIndex((month) => month.toLowerCase() === incomeMonth.toLowerCase());
+
+    if (transformedMonthIndex === -1) {
+        return res.status(400).json({ error: 'Invalid expense month' });
+    }
+
+    const originalMonth = String(transformedMonthIndex + 1).padStart(2, '0');
+
+    try {
+        const incomes = await pool.query(
+            `SELECT * FROM incomes WHERE user_email = $1 AND income_month = $2 AND income_year = $3`, [userEmail, originalMonth, currentIncomeYear]
+        );
+
+        const formattedExpenses = incomes.rows.map((income: { income_date: string | number | Date; }) => {
+            const formattedDate = new Date(income.income_date).toLocaleDateString('en-GB');
+            return { ...income, income_date: formattedDate };
+        });
+
+        res.json(formattedExpenses);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'An error occurred' });
+    }
+});
+
 // edit an income
 app.put('/income/:userEmail/:id', async (req: Request, res: Response) => {
     const updated_at = new Date()
