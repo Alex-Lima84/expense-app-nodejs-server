@@ -104,7 +104,7 @@ app.get('/expense-categories', checkToken, async (req: Request, res: Response) =
 })
 
 // get expense types
-app.get('/expense-types/:expenseCategoryId', checkToken, async (req: Request, res: Response) => {
+app.get('/expenses/types/:expenseCategoryId', checkToken, async (req: Request, res: Response) => {
 
     const { expenseCategoryId } = req.params
 
