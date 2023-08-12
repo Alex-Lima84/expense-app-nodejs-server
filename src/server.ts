@@ -271,10 +271,10 @@ app.post('/income-entry', async (req: Request, res: Response) => {
     const { incomeTypeName, incomeAmount, incomeDate, incomeYear, incomeMonth, userEmail } = req.body
     const id = uuidv4()
     try {
-        const newExpense = await pool.query(`INSERT INTO incomes (income_type, income_amount, income_date, income_year, income_month, id, user_email) 
+        const newIncome = await pool.query(`INSERT INTO incomes (income_type, income_amount, income_date, income_year, income_month, id, user_email) 
         VALUES($1, $2, $3, $4, $5, $6, $7)`,
             [incomeTypeName, incomeAmount, incomeDate, incomeYear, incomeMonth, id, userEmail])
-        res.json(newExpense)
+        res.json(newIncome)
     } catch (error) {
         console.error(error)
         res.status(500).json({ error: 'An error occurred' });
